@@ -4,6 +4,7 @@ import argparse
 from collections import Counter
 import stat
 import pathlib
+import subprocess
 
 
 def is_dir(p):
@@ -42,30 +43,42 @@ def add_roots(paths, roots):
         add_dir(paths, roots, i, root)
 
 
-
 parser = argparse.ArgumentParser(description='Generate a merged view of directories using links.')
 parser.add_argument('roots', metavar='root', nargs='+', help='ordered list of directories to stack')
 parser.add_argument('-o', '--out', help='name of output directory')
 
 args = parser.parse_args()
 
-print(args.out)
-
 roots = [pathlib.Path(r) for r in args.roots]
 for r in roots: assert is_dir(r)
-print('roots:')
-for i, root in enumerate(roots):
-    print('  {} - {}'.format(i, root))
-print()
+for i, r in enumerate(roots): print('root:', i, '-', r)
 
 paths = {}
-
 add_roots(paths, roots)
 
-print()
-for path, root_i in sorted(paths.items()):
-    print('{} <- {}'.format('m' if root_i is None else root_i, path))
+path_list = sorted(paths.items())
+merge_list = [p for p, r in path_list if r is None]
+link_list = [(p, r) for p, r in path_list if r is not None]
+
+for m in merge_list: print('merge:', m)
+for p, r in link_list: print('link:', r, '<-', p)
 
 if args.out:
     out = pathlib.Path(args.out)
+    print('mkdir:', out)
     out.mkdir(parents=False)
+
+    for m in merge_list:
+        outm = out / m
+        print('mkdir:', outm)
+        outm.mkdir(parents=False)
+
+    for p, r in link_list:
+        # ln can automatically create relative links
+        # doesn't appear to be an easy way to do it with pathlib
+        # NOTE: looks like ln dereferences the target when -r is specified
+        cmd = ('ln', '-s', str(roots[r] / p), str(out / p))
+        print('call:', *cmd)
+        subprocess.check_call(cmd)
+
+# [ -e out ] && rm -r out; stackdir -o out a b c
