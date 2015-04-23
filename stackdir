@@ -1,7 +1,9 @@
-import itertools
+#!/usr/bin/env python3
+
+import argparse
 from collections import Counter
 import stat
-import pathlib as pl
+import pathlib
 
 
 def is_dir(p):
@@ -40,10 +42,17 @@ def add_roots(paths, roots):
         add_dir(paths, roots, i, root)
 
 
-abspath = pl.Path('/home/hans/utest')
-roots = [abspath / pl.Path(r) for r in ('a', 'b', 'c')]
-for r in roots: assert is_dir(r)
 
+parser = argparse.ArgumentParser(description='Generate a merged view of directories using links.')
+parser.add_argument('roots', metavar='root', nargs='+', help='ordered list of directories to stack')
+parser.add_argument('-o', '--out', help='name of output directory')
+
+args = parser.parse_args()
+
+print(args.out)
+
+roots = [pathlib.Path(r) for r in args.roots]
+for r in roots: assert is_dir(r)
 print('roots:')
 for i, root in enumerate(roots):
     print('  {} - {}'.format(i, root))
@@ -56,3 +65,7 @@ add_roots(paths, roots)
 print()
 for path, root_i in sorted(paths.items()):
     print('{} <- {}'.format('m' if root_i is None else root_i, path))
+
+if args.out:
+    out = pathlib.Path(args.out)
+    out.mkdir(parents=False)
