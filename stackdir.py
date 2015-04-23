@@ -44,8 +44,15 @@ abspath = pl.Path('/home/hans/utest')
 roots = [abspath / pl.Path(r) for r in ('a', 'b', 'c')]
 for r in roots: assert is_dir(r)
 
+print('roots:')
+for i, root in enumerate(roots):
+    print('  {} - {}'.format(i, root))
+print()
+
 paths = {}
 
 add_roots(paths, roots)
 
-
+print()
+for path, root_i in sorted(paths.items()):
+    print('{} <- {}'.format('m' if root_i is None else root_i, path))
